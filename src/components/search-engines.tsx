@@ -20,7 +20,7 @@ export default function AllSearchEngines() {
               <button
                 key={engine.id}
                 onClick={() => handleEngineSelect(engine.id, query)}
-                className="flex h-9 min-w-[100px] items-center justify-start gap-2 rounded-md border border-gray-200 px-3 transition-colors hover:border-[#FF6B3D] hover:bg-gray-50 overflow-hidden"
+                className="flex h-9 min-w-[100px] items-center justify-start gap-2 rounded-md border border-gray-200 px-3 transition-colors hover:border-[#9333EA] hover:bg-gray-50 overflow-hidden"
               >
                 <Image
                   src={engine.icon}
