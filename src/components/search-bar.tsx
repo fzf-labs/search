@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearch } from '../contexts/search-context'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/solid'
 
 interface Suggestion {
@@ -10,11 +10,12 @@ interface Suggestion {
   s: string[]
 }
 
+type BaiduCallback = (data: Suggestion) => void
+
+// 扩展全局 Window 接口
 declare global {
   interface Window {
-    baidu: {
-      sug: (data: Suggestion) => void
-    }
+    [key: string]: BaiduCallback | undefined | Window[keyof Window]
   }
 }
 
@@ -24,44 +25,24 @@ export default function SearchBar() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   
-  // 添加 script 引用追踪
-  const scriptRef = useRef<HTMLScriptElement | null>(null)
-
   const fetchSuggestions = useCallback(async (value: string) => {
     if (!value.trim()) {
       setSuggestions([])
       return
     }
 
-    // 清理之前的 script 标签
-    if (scriptRef.current) {
-      document.body.removeChild(scriptRef.current)
-    }
-
-    try {
-      const jsonpPromise = new Promise<string[]>((resolve) => {
-        window.baidu = {
-          sug: (data: Suggestion) => {
-            resolve(data.s)
+    // 通过 chrome.runtime.sendMessage 发送请求
+    if (chrome?.runtime?.sendMessage) {
+      chrome.runtime.sendMessage(
+        { type: 'GET_SUGGESTIONS', query: value },
+        (response) => {
+          if (response.success && response.data?.s) {
+            setSuggestions(response.data.s)
+          } else {
+            setSuggestions([])
           }
         }
-      })
-
-      const script = document.createElement('script')
-      script.src = `https://suggestion.baidu.com/su?wd=${encodeURIComponent(value)}&ie=utf-8&p=3&cb=window.baidu.sug`
-      scriptRef.current = script
-      document.body.appendChild(script)
-
-      const results = await jsonpPromise
-      setSuggestions(results)
-    } catch (error) {
-      console.error('Failed to fetch suggestions:', error)
-      setSuggestions([])
-    } finally {
-      if (scriptRef.current) {
-        document.body.removeChild(scriptRef.current)
-        scriptRef.current = null
-      }
+      )
     }
   }, [])
 
@@ -73,11 +54,6 @@ export default function SearchBar() {
 
     return () => {
       clearTimeout(timer)
-      // 组件卸载时清理 script 标签
-      if (scriptRef.current) {
-        document.body.removeChild(scriptRef.current)
-        scriptRef.current = null
-      }
     }
   }, [query, fetchSuggestions])
 
