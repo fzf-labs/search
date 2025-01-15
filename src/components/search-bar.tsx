@@ -83,6 +83,17 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && suggestions.length > 0) {
+        // 如果有选中的建议，使用选中的建议
+        handleSuggestionClick(suggestions[selectedIndex])
+      }
+      // 无论是否选中建议，都关闭下拉框
+      setShowSuggestions(false)
+      setSelectedIndex(-1)
+      return
+    }
+
     if (!suggestions.length) return
 
     switch (e.key) {
@@ -95,11 +106,6 @@ export default function SearchBar() {
       case 'ArrowUp':
         e.preventDefault()
         setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
-        break
-      case 'Enter':
-        if (selectedIndex >= 0) {
-          handleSuggestionClick(suggestions[selectedIndex])
-        }
         break
       case 'Escape':
         setShowSuggestions(false)
