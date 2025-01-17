@@ -16,30 +16,24 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [query, setQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null!)
 
-  const highlightSearchInput = () => {
-    if (searchInputRef.current) {
-      searchInputRef.current.classList.remove('animate-shake')
-      void searchInputRef.current.offsetWidth
-      searchInputRef.current.classList.add('animate-shake')
-      setTimeout(() => {
-        searchInputRef.current?.classList.remove('animate-shake')
-      }, 600)
-    }
-  }
-
   const handleEngineSelect = (engineId: string, query: string) => {
-    if (!query.trim()) {
-      highlightSearchInput()
-      return
-    }
-
     const engine = searchEngines
       .flatMap(category => category.engines)
       .find(engine => engine.id === engineId)
 
     if (engine) {
-      const searchUrl = engine.url.replace('{query}', encodeURIComponent(query.trim()))
-      window.open(searchUrl, '_blank')
+      if (!query.trim()) {
+        try {
+          const url = new URL(engine.url)
+          window.open(url.origin, '_blank')
+        } catch (e) {
+          console.error('Invalid URL:', engine.url, e)
+        }
+        return
+      }else{
+        const searchUrl = engine.url.replace('{query}', encodeURIComponent(query.trim()))
+        window.open(searchUrl, '_blank')
+      }
     }
   }
 
