@@ -72,6 +72,16 @@ async function buildExtension() {
         )
       }
       
+      // 处理字体预加载
+      htmlContent = htmlContent.replace(
+        /<link[^>]*preload[^>]*>/g,
+        (match) => {
+          // 如果是字体预加载,则移除
+          if(match.includes('font')) return '';
+          return match;
+        }
+      );
+      
       await fs.writeFile(htmlFile, htmlContent)
     }
 
@@ -101,7 +111,11 @@ async function buildExtension() {
       ],
       content_security_policy: {
         extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-      }
+      },
+      web_accessible_resources: [{
+        resources: ["assets/*"],
+        matches: ["<all_urls>"]
+      }]
     }
 
     await fs.writeJSON(path.join(extensionDir, 'manifest.json'), manifest, { spaces: 2 })
